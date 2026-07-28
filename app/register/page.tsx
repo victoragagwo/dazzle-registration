@@ -427,7 +427,7 @@ export default function RegisterPage() {
               Declaration
             </h2>
             <p className="mb-4 text-sm text-slate-600">
-              I hereby certify that the information provided above is true and accurate to the best of my knowledge.
+              Kindly confirmation that the information provided above is true and accurate to the best of your knowledge.
             </p>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm font-medium md:col-span-2">
