@@ -16,19 +16,25 @@ export async function POST(request: Request) {
       "dateOfBirth",
       "age",
       "gender",
+      "preferredPosition",
       "address",
       "city",
       "state",
       "phoneNumber",
       "email",
-      "signature",
       "declarationDate",
-      "parentSignature",
       "parentDate",
+      "certifyTrueAndAccurate",
+      "parentConsent",
     ] as const;
 
     const missingFields = requiredFields.filter((field) => {
       const value = payload[field];
+
+      if (typeof value === "boolean") {
+        return !value;
+      }
+
       return typeof value !== "string" || !value.trim();
     });
 

@@ -9,15 +9,16 @@ type FormState = {
   dateOfBirth: string;
   age: string;
   gender: string;
+  preferredPosition: string;
   address: string;
   city: string;
   state: string;
   phoneNumber: string;
   email: string;
-  signature: string;
   declarationDate: string;
-  parentSignature: string;
   parentDate: string;
+  certifyTrueAndAccurate: boolean;
+  parentConsent: boolean;
 };
 
 type FormErrors = Partial<Record<keyof FormState, string>>;
@@ -27,15 +28,16 @@ const initialFormState: FormState = {
   dateOfBirth: "",
   age: "",
   gender: "",
+  preferredPosition: "",
   address: "",
   city: "",
   state: "",
   phoneNumber: "",
   email: "",
-  signature: "",
   declarationDate: "",
-  parentSignature: "",
   parentDate: "",
+  certifyTrueAndAccurate: false,
+  parentConsent: false,
 };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -60,10 +62,16 @@ export default function RegisterPage() {
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const handleChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
     setFormData((previous) => ({ ...previous, [name]: value }));
+    setErrors((previous) => ({ ...previous, [name]: undefined }));
+  };
+
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = event.target;
+    setFormData((previous) => ({ ...previous, [name]: checked }));
     setErrors((previous) => ({ ...previous, [name]: undefined }));
   };
 
@@ -75,23 +83,34 @@ export default function RegisterPage() {
       "dateOfBirth",
       "age",
       "gender",
+      "preferredPosition",
       "address",
       "city",
       "state",
       "phoneNumber",
       "email",
-      "signature",
       "declarationDate",
-      "parentSignature",
       "parentDate",
     ];
 
     requiredFields.forEach((field) => {
-      const value = formData[field].trim();
-      if (!value) {
+      const value = formData[field];
+      if (typeof value === "string") {
+        if (!value.trim()) {
+          nextErrors[field] = "This field is required.";
+        }
+      } else if (!value) {
         nextErrors[field] = "This field is required.";
       }
     });
+
+    if (!formData.certifyTrueAndAccurate) {
+      nextErrors.certifyTrueAndAccurate = "Please confirm this declaration.";
+    }
+
+    if (!formData.parentConsent) {
+      nextErrors.parentConsent = "Please confirm this parent/guardian consent.";
+    }
 
     if (formData.email.trim() && !emailPattern.test(formData.email.trim())) {
       nextErrors.email = "Please enter a valid email address.";
@@ -239,12 +258,16 @@ export default function RegisterPage() {
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
                 Gender
-                <input
+                <select
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
                   className="rounded-lg border border-slate-300 px-3 py-2"
-                />
+                >
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
                 {errors.gender ? <span className="text-xs text-red-600">{errors.gender}</span> : null}
               </label>
             </div>
@@ -343,8 +366,26 @@ export default function RegisterPage() {
                 <textarea className="min-h-24 rounded-lg border border-slate-300 px-3 py-2" />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium md:col-span-2">
-                Preferred Playing Position(s)
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                Preferred Playing Position
+                <select
+                  name="preferredPosition"
+                  value={formData.preferredPosition}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                >
+                  <option value="">Select preferred position</option>
+                  <option value="Goalkeeper">Goalkeeper</option>
+                  <option value="Centre Back">Centre Back</option>
+                  <option value="Left Back">Left Back</option>
+                  <option value="Right Back">Right Back</option>
+                  <option value="Defensive Midfielder">Defensive Midfielder</option>
+                  <option value="Central Midfielder">Central Midfielder</option>
+                  <option value="Attacking Midfielder">Attacking Midfielder</option>
+                  <option value="Left Winger">Left Winger</option>
+                  <option value="Right Winger">Right Winger</option>
+                  <option value="Striker">Striker</option>
+                </select>
+                {errors.preferredPosition ? <span className="text-xs text-red-600">{errors.preferredPosition}</span> : null}
               </label>
             </div>
           </section>
@@ -389,15 +430,16 @@ export default function RegisterPage() {
               I hereby certify that the information provided above is true and accurate to the best of my knowledge.
             </p>
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                Signature (type Fullname as signature)
+              <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm font-medium md:col-span-2">
                 <input
-                  name="signature"
-                  value={formData.signature}
-                  onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-3 py-2"
+                  type="checkbox"
+                  name="certifyTrueAndAccurate"
+                  checked={formData.certifyTrueAndAccurate}
+                  onChange={handleCheckboxChange}
+                  className="mt-1 h-4 w-4 rounded border-slate-300"
                 />
-                {errors.signature ? <span className="text-xs text-red-600">{errors.signature}</span> : null}
+                <span>I certify that the information provided is true and accurate.</span>
+                {errors.certifyTrueAndAccurate ? <span className="text-xs text-red-600">{errors.certifyTrueAndAccurate}</span> : null}
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
                 Date (YYYY-MM-DD)
@@ -410,15 +452,16 @@ export default function RegisterPage() {
                 />
                 {errors.declarationDate ? <span className="text-xs text-red-600">{errors.declarationDate}</span> : null}
               </label>
-              <label className="flex flex-col gap-1 text-sm font-medium">
-                Parent/Guardian Signature (type Fullname as signature)
+              <label className="flex items-start gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm font-medium md:col-span-2">
                 <input
-                  name="parentSignature"
-                  value={formData.parentSignature}
-                  onChange={handleChange}
-                  className="rounded-lg border border-slate-300 px-3 py-2"
+                  type="checkbox"
+                  name="parentConsent"
+                  checked={formData.parentConsent}
+                  onChange={handleCheckboxChange}
+                  className="mt-1 h-4 w-4 rounded border-slate-300"
                 />
-                {errors.parentSignature ? <span className="text-xs text-red-600">{errors.parentSignature}</span> : null}
+                <span>I confirm I am the player’s parent/guardian and consent to this registration.</span>
+                {errors.parentConsent ? <span className="text-xs text-red-600">{errors.parentConsent}</span> : null}
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
                 Date (YYYY-MM-DD)
