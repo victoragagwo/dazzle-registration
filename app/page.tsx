@@ -200,6 +200,7 @@ export default function Home() {
             <div>
               <p className="text-xl font-bold uppercase tracking-wide">Dazzle FC</p>
               <p className="text-sm text-slate-300">Developing champions through discipline, passion, and purpose.</p>
+              <p className="text-sm text-slate-300">© {new Date().getFullYear()} Dazzle Football Academy. All rights reserved.</p>
             </div>
           </div>
 

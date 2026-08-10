@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 
 type FormState = {
@@ -15,6 +16,15 @@ type FormState = {
   state: string;
   phoneNumber: string;
   email: string;
+  schoolName: string;
+  gradeClass: string;
+  gpaPercentage: string;
+  awardsHonors: string;
+  previousFootballExperience: string;
+  medicalConditionsOrAllergies: string;
+  currentMedications: string;
+  hearAbout: string;
+  whyJoinAcademy: string;
   declarationDate: string;
   parentDate: string;
   certifyTrueAndAccurate: boolean;
@@ -34,6 +44,15 @@ const initialFormState: FormState = {
   state: "",
   phoneNumber: "",
   email: "",
+  schoolName: "",
+  gradeClass: "",
+  gpaPercentage: "",
+  awardsHonors: "",
+  previousFootballExperience: "",
+  medicalConditionsOrAllergies: "",
+  currentMedications: "",
+  hearAbout: "",
+  whyJoinAcademy: "",
   declarationDate: "",
   parentDate: "",
   certifyTrueAndAccurate: false,
@@ -54,24 +73,43 @@ function isValidDate(value: string) {
 }
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState<FormState>(initialFormState);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [submissionMessage, setSubmissionMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("dazzleRegistrationDraft");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as FormState;
+        setFormData((previous) => ({ ...previous, ...parsed }));
+      } catch {
+        // Ignore invalid saved data.
+      }
+    }
+  }, []);
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
-    setFormData((previous) => ({ ...previous, [name]: value }));
+    setFormData((previous) => {
+      const nextState = { ...previous, [name]: value };
+      localStorage.setItem("dazzleRegistrationDraft", JSON.stringify(nextState));
+      return nextState;
+    });
     setErrors((previous) => ({ ...previous, [name]: undefined }));
   };
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = event.target;
-    setFormData((previous) => ({ ...previous, [name]: checked }));
+    setFormData((previous) => {
+      const nextState = { ...previous, [name]: checked };
+      localStorage.setItem("dazzleRegistrationDraft", JSON.stringify(nextState));
+      return nextState;
+    });
     setErrors((previous) => ({ ...previous, [name]: undefined }));
   };
 
@@ -140,41 +178,14 @@ export default function RegisterPage() {
     setHasAttemptedSubmit(true);
     const nextErrors = validate();
     setErrors(nextErrors);
-    setSubmissionMessage("");
 
     if (Object.keys(nextErrors).length > 0) {
-      setSubmitted(false);
       return;
     }
 
     setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/registration", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Submission failed.");
-      }
-
-      setSubmitted(true);
-      setSubmissionMessage(result.message || "Form submitted successfully!");
-      setFormData(initialFormState);
-    } catch (error) {
-      setSubmitted(false);
-      setSubmissionMessage(
-        error instanceof Error ? error.message : "Unable to submit the form.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    localStorage.setItem("dazzleRegistrationDraft", JSON.stringify(formData));
+    router.push("/review");
   };
 
   return (
@@ -205,18 +216,6 @@ export default function RegisterPage() {
           {hasAttemptedSubmit && Object.keys(errors).length > 0 ? (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
               Please correct the highlighted fields before submitting.
-            </div>
-          ) : null}
-
-          {submitted ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-              {submissionMessage || "Your form was submitted successfully."}
-            </div>
-          ) : null}
-
-          {submissionMessage && !submitted ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              {submissionMessage}
             </div>
           ) : null}
 
@@ -339,19 +338,39 @@ export default function RegisterPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm font-medium">
                 School Name
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                <input
+                  name="schoolName"
+                  value={formData.schoolName}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
                 Grade/Class
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                <input
+                  name="gradeClass"
+                  value={formData.gradeClass}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
                 GPA/Percentage (if applicable, type NULL if not applicable)
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                <input
+                  name="gpaPercentage"
+                  value={formData.gpaPercentage}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
                 Awards/Honors (if any, type NULL if none)
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                <input
+                  name="awardsHonors"
+                  value={formData.awardsHonors}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
             </div>
           </section>
@@ -363,7 +382,12 @@ export default function RegisterPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm font-medium md:col-span-2">
                 Previous Football Experience (type NULL if none)
-                <textarea className="min-h-24 rounded-lg border border-slate-300 px-3 py-2" />
+                <textarea
+                  name="previousFootballExperience"
+                  value={formData.previousFootballExperience}
+                  onChange={handleChange}
+                  className="min-h-24 rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium md:col-span-2">
                 Preferred Playing Position
@@ -397,11 +421,21 @@ export default function RegisterPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-1 text-sm font-medium md:col-span-2">
                 Any Medical Conditions or Allergies (type NULL if none)
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                <input
+                  name="medicalConditionsOrAllergies"
+                  value={formData.medicalConditionsOrAllergies}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium md:col-span-2">
                 Current Medications (type NULL if none)
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                <input
+                  name="currentMedications"
+                  value={formData.currentMedications}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
             </div>
           </section>
@@ -413,11 +447,21 @@ export default function RegisterPage() {
             <div className="grid gap-4">
               <label className="flex flex-col gap-1 text-sm font-medium">
                 How did you hear about Dazzle Football Academy?
-                <input className="rounded-lg border border-slate-300 px-3 py-2" />
+                <input
+                  name="hearAbout"
+                  value={formData.hearAbout}
+                  onChange={handleChange}
+                  className="rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
               <label className="flex flex-col gap-1 text-sm font-medium">
                 Why do you want to join our academy?
-                <textarea className="min-h-24 rounded-lg border border-slate-300 px-3 py-2" />
+                <textarea
+                  name="whyJoinAcademy"
+                  value={formData.whyJoinAcademy}
+                  onChange={handleChange}
+                  className="min-h-24 rounded-lg border border-slate-300 px-3 py-2"
+                />
               </label>
             </div>
           </section>
@@ -489,7 +533,7 @@ export default function RegisterPage() {
               disabled={isSubmitting}
               className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-70"
             >
-              {isSubmitting ? "Submitting..." : "Submit Form"}
+              {isSubmitting ? "Preparing review..." : "Submit / Review"}
             </button>
           </div>
         </form>
